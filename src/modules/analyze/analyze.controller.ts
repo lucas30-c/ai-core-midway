@@ -16,7 +16,11 @@ export class AnalyzeController {
     const requestId = this.ctx.state.requestId;
     const traceId = this.ctx.state.traceId;
 
-    const result = await this.analyzeService.analyzeDiff(body.diff, { requestId, traceId });
+    const result = await this.analyzeService.analyzeDiff(body.diff, {
+      requestId,
+      traceId,
+      tscMode: body.tscMode,
+    });
 
     return {
       requestId,

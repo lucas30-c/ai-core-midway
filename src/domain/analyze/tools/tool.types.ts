@@ -5,6 +5,7 @@ export interface ToolRunContext {
   files: string[];          // changed files (filtered)
   requestId?: string;
   traceId?: string;
+  tscMode?: 'fast' | 'full';
 }
 
 export interface ToolRunner {

@@ -8,15 +8,24 @@ import { EslintRunner } from '../../domain/analyze/tools/eslint/eslint.runner';
 import { TscRunner } from '../../domain/analyze/tools/tsc/tsc.runner';
 import { AnalyzeContext, Finding } from '../../domain/analyze/rules/rule.types';
 
+export interface AnalyzeOptions {
+  requestId?: string;
+  traceId?: string;
+  tscMode?: 'fast' | 'full';
+}
+
 export interface AnalyzeResult {
   stats: { filesChanged: number; insertions: number; deletions: number };
   findingsCount: number;
   findings: Finding[];
+  meta: { tscMode: 'fast' | 'full' };
 }
 
 @Provide()
 export class AnalyzeService {
-  async analyzeDiff(diff: string, opts?: { requestId?: string; traceId?: string }): Promise<AnalyzeResult> {
+  async analyzeDiff(diff: string, opts?: AnalyzeOptions): Promise<AnalyzeResult> {
+    const tscMode = opts?.tscMode || 'fast';
+
     // 1. Parse diff
     const diffFiles = parseGitDiff(diff);
 
@@ -53,7 +62,7 @@ export class AnalyzeService {
     // 5. Run tool runners (ESLint + TSC)
     const toolFindings = [
       ...(await new EslintRunner().run({ cwd: process.cwd(), files: changedFiles, ...opts })),
-      ...(await new TscRunner().run({ cwd: process.cwd(), files: changedFiles, ...opts })),
+      ...(await new TscRunner().run({ cwd: process.cwd(), files: changedFiles, tscMode, ...opts })),
     ];
 
     // 6. Merge all findings
@@ -67,6 +76,7 @@ export class AnalyzeService {
       stats: analyzeCtx.stats,
       findingsCount: findings.length,
       findings,
+      meta: { tscMode },
     };
   }
 }

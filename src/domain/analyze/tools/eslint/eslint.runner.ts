@@ -1,4 +1,4 @@
-import { execa } from 'execa';
+import execa = require('execa');
 import { ToolRunContext, ToolRunner } from '../tool.types';
 import { Finding } from '../../rules/rule.types';
 import { adaptEslintJsonToFindings } from './eslint.adapter';

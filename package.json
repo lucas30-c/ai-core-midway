@@ -12,7 +12,7 @@
     "@midwayjs/validate": "^3.20.22",
     "better-sqlite3": "^12.6.2",
     "dotenv": "^17.3.1",
-    "execa": "^9.6.1",
+    "execa": "^5.1.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {

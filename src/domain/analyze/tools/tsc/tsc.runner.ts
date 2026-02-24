@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
 import * as path from 'path';
+import * as fs from 'fs';
 import { ToolRunContext, ToolRunner } from '../tool.types';
 import { Finding } from '../../rules/rule.types';
 import { adaptTscDiagnosticsToFindings } from './tsc.adapter';
@@ -26,9 +27,20 @@ export class TscRunner implements ToolRunner {
       );
 
       // fast: 只编译变更文件；full: 全量编译
-      const rootNames = mode === 'fast'
-        ? Array.from(changed).map(f => path.join(ctx.cwd, f))
-        : config.fileNames;
+      let rootNames: string[];
+      if (mode === 'fast') {
+        // fast 模式：过滤掉磁盘上不存在的文件（避免误报 TS6053）
+        rootNames = Array.from(changed)
+          .map(f => path.join(ctx.cwd, f))
+          .filter(fullPath => fs.existsSync(fullPath));
+
+        // 如果所有文件都不存在，跳过 TSC
+        if (rootNames.length === 0) {
+          return [];
+        }
+      } else {
+        rootNames = config.fileNames;
+      }
 
       const program = ts.createProgram({
         rootNames,

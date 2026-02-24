@@ -2,6 +2,9 @@ import { MidwayConfig } from '@midwayjs/core';
 
 export default {
   keys: 'replace-with-your-keys',
+  koa: {
+    port: 7001,
+  },
   midwayLogger: {
     default: {
       level: 'info',

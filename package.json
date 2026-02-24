@@ -10,6 +10,7 @@
     "@midwayjs/koa": "^3.12.0",
     "@midwayjs/logger": "^3.1.0",
     "@midwayjs/validate": "^3.20.22",
+    "dotenv": "^17.3.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {

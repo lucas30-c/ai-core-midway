@@ -1,31 +1,19 @@
-import { Configuration, App } from '@midwayjs/core';
+import 'dotenv/config';
+import { Configuration } from '@midwayjs/core';
 import * as koa from '@midwayjs/koa';
-import * as validate from '@midwayjs/validate';
-import * as info from '@midwayjs/info';
+import { Application } from '@midwayjs/koa';
 import { join } from 'path';
-// import { DefaultErrorFilter } from './filter/default.filter';
-// import { NotFoundFilter } from './filter/notfound.filter';
-import { ReportMiddleware } from './middleware/report.middleware';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { GlobalErrorFilter } from './common/filters/global-error.filter';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Configuration({
-  imports: [
-    koa,
-    validate,
-    {
-      component: info,
-      enabledEnvironment: ['local'],
-    },
-  ],
+  imports: [koa, ChatModule],
   importConfigs: [join(__dirname, './config')],
 })
 export class MainConfiguration {
-  @App('koa')
-  app: koa.Application;
-
-  async onReady() {
-    // add middleware
-    this.app.useMiddleware([ReportMiddleware]);
-    // add filter
-    // this.app.useFilter([NotFoundFilter, DefaultErrorFilter]);
+  async onReady(_container, app: Application) {
+    app.useMiddleware([RequestIdMiddleware]);
+    app.useFilter([GlobalErrorFilter]);
   }
 }

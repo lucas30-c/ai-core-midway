@@ -1,10 +1,12 @@
 /**
  * 统一日志字段模型
- * 支持接入 ELK / Datadog 等日志系统
+ * 支持接入 ELK / Datadog / ARMS 等日志系统
  */
 export interface LogBase {
   level: 'info' | 'error' | 'warn';
   requestId?: string;
+  traceId?: string;
+  spanId?: string;
   route?: string;
   model?: string;
   fallbackUsed?: boolean;

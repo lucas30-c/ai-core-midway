@@ -3,7 +3,9 @@ import { Configuration } from '@midwayjs/core';
 import * as koa from '@midwayjs/koa';
 import { Application } from '@midwayjs/koa';
 import { join } from 'path';
+import { TraceMiddleware } from './common/middleware/trace.middleware';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { AccessLogMiddleware } from './common/middleware/access-log.middleware';
 import { GlobalErrorFilter } from './common/filters/global-error.filter';
 import { ChatModule } from './modules/chat/chat.module';
 
@@ -13,7 +15,7 @@ import { ChatModule } from './modules/chat/chat.module';
 })
 export class MainConfiguration {
   async onReady(_container, app: Application) {
-    app.useMiddleware([RequestIdMiddleware]);
+    app.useMiddleware([TraceMiddleware, RequestIdMiddleware, AccessLogMiddleware]);
     app.useFilter([GlobalErrorFilter]);
   }
 }

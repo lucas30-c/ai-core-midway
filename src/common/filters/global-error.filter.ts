@@ -25,6 +25,8 @@ import { ErrorCodes } from '../errors/error.codes';
 export class GlobalErrorFilter {
   async catch(err: any, ctx: Context) {
     const requestId = ctx.state?.requestId;
+    const traceId = ctx.state?.traceId;
+    const spanId = ctx.state?.spanId;
 
     const isAppError = err instanceof AppError;
 
@@ -35,6 +37,8 @@ export class GlobalErrorFilter {
     ctx.logger.error({
       level: 'error',
       requestId,
+      traceId,
+      spanId,
       code,
       status,
       message,
@@ -47,6 +51,7 @@ export class GlobalErrorFilter {
     ctx.status = status;
     ctx.body = {
       requestId,
+      traceId,
       code,
       error: message,
     };

@@ -8,9 +8,10 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { AccessLogMiddleware } from './common/middleware/access-log.middleware';
 import { GlobalErrorFilter } from './common/filters/global-error.filter';
 import { ChatModule } from './modules/chat/chat.module';
+import { AnalyzeModule } from './modules/analyze/analyze.module';
 
 @Configuration({
-  imports: [koa, ChatModule],
+  imports: [koa, ChatModule, AnalyzeModule],
   importConfigs: [join(__dirname, './config')],
 })
 export class MainConfiguration {

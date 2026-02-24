@@ -22,6 +22,7 @@
 
 这就像前端里你给 axios 加的 interceptor（拦截器）。
  */
+// 
 import { Middleware } from '@midwayjs/core';
 import { Context, NextFunction } from '@midwayjs/koa';
 
@@ -37,6 +38,7 @@ export class RequestIdMiddleware {
     return async (ctx: Context, next: NextFunction) => {
       const rid = ctx.get('x-request-id') || newRequestId();
 
+      ctx.logger.info({ step: "middleware", requestId: ctx.state.requestId });
       ctx.state.requestId = rid;
       ctx.set('x-request-id', rid);
 

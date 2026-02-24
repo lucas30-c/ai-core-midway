@@ -17,3 +17,6 @@ Koa
 
 每次请求都是独立的ctx，每次请求有独立的请求作用域ctx。
 middleware 和 controller 共享同一个 ctx
+
+每次请求都会走一遍“创建 ctx → 执行中间件链 → 进入 controller → 返回响应”，所以“注入 ctx 到 controller”这件事也是按请求发生的。（userService 通常是单例注入，不一定每次新建；ctx 一定是请求级。）
+Midway/Koa 的核心是：请求级对象（ctx）+ 单例服务（service）。

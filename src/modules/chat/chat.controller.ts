@@ -1,7 +1,9 @@
-import { Controller, Post, Body, Inject } from '@midwayjs/core';
+import { Controller, Post, Get, Body, Inject } from '@midwayjs/core';
 import { Context } from '@midwayjs/koa';
 import { LlmService } from '../../core/llm/llm.service';
 import { ChatBodyDTO } from './chat.dto';
+import { baseLog } from '../../common/logger/log.helper';
+import { CallStore } from '../../core/metrics/call.store';
 
 @Controller('/')
 export class ChatController {
@@ -10,6 +12,9 @@ export class ChatController {
 
   @Inject()
   llm: LlmService;
+
+  @Inject()
+  callStore: CallStore;
 
   @Post('/chat')
   async chat(@Body() body: ChatBodyDTO) {
@@ -23,13 +28,22 @@ export class ChatController {
 
     const latencyMs = Date.now() - t0;
 
-    this.ctx.logger.info({
-      level: 'info',
+    this.ctx.logger.info(
+      baseLog({
+        requestId,
+        route: '/chat',
+        model: result.model,
+        fallbackUsed: result.fallbackUsed,
+        latencyMs,
+      })
+    );
+
+    this.callStore.add({
       requestId,
-      route: '/chat',
       model: result.model,
-      fallbackUsed: result.fallbackUsed,
       latencyMs,
+      totalTokens: result.usage?.total_tokens,
+      cost: result.usage?.cost,
       ts: new Date().toISOString(),
     });
 
@@ -61,12 +75,19 @@ export class ChatController {
 
     const latencyMs = Date.now() - t0;
 
-    ctx.logger.info({
-      level: 'info',
+    ctx.logger.info(
+      baseLog({
+        requestId,
+        route: '/chat/stream',
+        model: out.model,
+        fallbackUsed: out.fallbackUsed,
+        latencyMs,
+      })
+    );
+
+    this.callStore.add({
       requestId,
-      route: '/chat/stream',
       model: out.model,
-      fallbackUsed: out.fallbackUsed,
       latencyMs,
       ts: new Date().toISOString(),
     });
@@ -74,5 +95,10 @@ export class ChatController {
     send('done', '[DONE]');
     ctx.res.end();
     return;
+  }
+
+  @Get('/metrics')
+  async metrics() {
+    return this.callStore.list();
   }
 }

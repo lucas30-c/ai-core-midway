@@ -44,6 +44,7 @@ export class ChatController {
       latencyMs,
       totalTokens: result.usage?.total_tokens,
       cost: result.usage?.cost,
+      status: 'success',
       ts: new Date().toISOString(),
     });
 
@@ -89,6 +90,7 @@ export class ChatController {
       requestId,
       model: out.model,
       latencyMs,
+      status: 'success',
       ts: new Date().toISOString(),
     });
 
@@ -99,6 +101,16 @@ export class ChatController {
 
   @Get('/metrics')
   async metrics() {
-    return this.callStore.list();
+    return this.callStore.recent();
+  }
+
+  @Get('/metrics/recent')
+  async recent() {
+    return this.callStore.recent();
+  }
+
+  @Get('/metrics/summary')
+  async summary() {
+    return this.callStore.summary();
   }
 }

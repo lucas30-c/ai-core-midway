@@ -1,9 +1,12 @@
 export interface AnalyzeCommandOptions {
-  diffFile: string;
+  diffFile?: string;
+  git?: string;
+  gitRange?: string;
   format: 'markdown' | 'json';
   out?: string;
   failOn: 'error' | 'warning';
   tscMode: 'fast' | 'full';
+  cwd: string;
 }
 
 export enum ExitCode {

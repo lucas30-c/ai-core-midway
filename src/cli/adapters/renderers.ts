@@ -11,7 +11,7 @@ export function renderReport(
   if (format === 'json') {
     return JSON.stringify(
       {
-        schemaVersion: '1.0.0',
+        schemaVersion: '2.0.0',
         engine: {
           name: pkg.name,
           version: pkg.version,

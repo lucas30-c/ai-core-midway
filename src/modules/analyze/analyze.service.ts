@@ -6,6 +6,7 @@ import { LargeDiffRule } from '../../domain/analyze/rules/rules/large-diff.rule'
 import { ConsoleLogRule } from '../../domain/analyze/rules/rules/console-log.rule';
 import { AnyTypeRule } from '../../domain/analyze/rules/rules/any-type.rule';
 import { AstBoundaryRule } from '../../domain/analyze/rules/rules/ast-boundary.rule';
+import { EarlyReturnRule } from '../../domain/analyze/rules/rules/early-return.rule';
 import { EslintRunner } from '../../domain/analyze/tools/eslint/eslint.runner';
 import { TscRunner } from '../../domain/analyze/tools/tsc/tsc.runner';
 import { AnalyzeContext, Finding } from '../../domain/analyze/rules/rule.types';
@@ -17,6 +18,7 @@ import {
 } from '../../domain/analyze/report/report.model';
 import { AiDebtConfig } from '../../domain/analyze/config/config.types';
 import { DEFAULT_CONFIG } from '../../domain/analyze/config/default.config';
+import { buildImpactAnalysis } from '../../domain/analyze/impact/impact.builder';
 
 export interface AnalyzeOptions {
   requestId?: string;
@@ -50,8 +52,10 @@ function riskLevel(findings: Finding[]): RiskLevel {
  */
 function normalizeChangedFiles(diffFiles: DiffFile[]): string[] {
   return diffFiles
-    .map(f => f.newPath)
-    .filter(p => p !== '/dev/null' && !p.startsWith('/dev/null'))
+    .map(f => f.newPath ?? f.oldPath)
+    .filter(
+      (p): p is string => !!p && p !== '/dev/null' && !p.startsWith('/dev/null')
+    )
     .map(p => {
       // Remove a/ or b/ prefix if present (git diff format)
       let normalized = p.replace(/^[ab]\//, '');
@@ -105,6 +109,7 @@ export class AnalyzeService {
       new ConsoleLogRule(),
       new AnyTypeRule(),
       new AstBoundaryRule(),
+      new EarlyReturnRule(),
     ]);
     const ruleFindings = ruleEngine.run(analyzeCtx);
 
@@ -126,10 +131,18 @@ export class AnalyzeService {
     const score = (s: string) => (s === 'HIGH' ? 3 : s === 'MEDIUM' ? 2 : 1);
     findings.sort((a, b) => score(b.severity) - score(a.severity));
 
+    const impact = buildImpactAnalysis({
+      findings,
+      diffFiles,
+      stats: analyzeCtx.stats,
+      config,
+    });
+
     const reportModel = buildReportModel({
       risk: riskLevel(findings),
       stats: analyzeCtx.stats,
       findings,
+      impact,
     });
 
     const markdown = renderMarkdown(reportModel);

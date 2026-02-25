@@ -1,6 +1,9 @@
+export type DiffFileStatus = 'added' | 'modified' | 'deleted' | 'renamed';
+
 export interface DiffFile {
   oldPath?: string;
-  newPath: string;
+  newPath?: string;
+  status: DiffFileStatus;
   hunks: DiffHunk[];
 }
 

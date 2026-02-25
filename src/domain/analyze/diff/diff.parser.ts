@@ -1,7 +1,31 @@
-import { DiffFile, DiffHunk, DiffLine } from './diff.types';
+import { DiffFile, DiffFileStatus, DiffHunk, DiffLine } from './diff.types';
 
 const FILE_RE = /^diff --git a\/(.+) b\/(.+)$/;
 const HUNK_RE = /^@@ -(\d+),?(\d*) \+(\d+),?(\d*) @@/;
+
+/**
+ * Status detection priority (highest to lowest):
+ * 1. rename from/to → 'renamed'
+ * 2. new file mode OR --- /dev/null → 'added'
+ * 3. deleted file mode OR +++ /dev/null → 'deleted'
+ * 4. default → 'modified'
+ */
+function resolveStatus(flags: {
+  hasRename: boolean;
+  hasNewFileMode: boolean;
+  hasDeletedFileMode: boolean;
+  hasDevNullOld: boolean;
+  hasDevNullNew: boolean;
+}): DiffFileStatus {
+  // Priority 1: rename (highest)
+  if (flags.hasRename) return 'renamed';
+  // Priority 2: added
+  if (flags.hasNewFileMode || flags.hasDevNullOld) return 'added';
+  // Priority 3: deleted
+  if (flags.hasDeletedFileMode || flags.hasDevNullNew) return 'deleted';
+  // Priority 4: modified (default)
+  return 'modified';
+}
 
 export function parseGitDiff(diffText: string): DiffFile[] {
   const lines = diffText.split('\n');
@@ -19,9 +43,62 @@ export function parseGitDiff(diffText: string): DiffFile[] {
       if (currentHunk && currentFile) currentFile.hunks.push(currentHunk);
       currentHunk = null;
 
-      currentFile = { oldPath: fm[1], newPath: fm[2], hunks: [] };
+      currentFile = {
+        oldPath: fm[1],
+        newPath: fm[2],
+        status: 'modified',
+        hunks: [],
+      };
       files.push(currentFile);
       i++;
+
+      // Collect metadata flags between "diff --git" and first hunk "@@"
+      const flags = {
+        hasRename: false,
+        hasNewFileMode: false,
+        hasDeletedFileMode: false,
+        hasDevNullOld: false,
+        hasDevNullNew: false,
+      };
+      let renameFrom: string | undefined;
+      let renameTo: string | undefined;
+
+      while (i < lines.length) {
+        const ml = lines[i];
+        if (ml.startsWith('diff --git ') || ml.startsWith('@@ ')) break;
+
+        if (ml.startsWith('new file mode')) {
+          flags.hasNewFileMode = true;
+        } else if (ml.startsWith('deleted file mode')) {
+          flags.hasDeletedFileMode = true;
+        } else if (ml.startsWith('rename from ')) {
+          flags.hasRename = true;
+          renameFrom = ml.slice('rename from '.length);
+        } else if (ml.startsWith('rename to ')) {
+          flags.hasRename = true;
+          renameTo = ml.slice('rename to '.length);
+        } else if (ml.startsWith('--- /dev/null')) {
+          flags.hasDevNullOld = true;
+        } else if (ml.startsWith('+++ /dev/null')) {
+          flags.hasDevNullNew = true;
+        }
+
+        i++;
+      }
+
+      // Apply priority-based status resolution
+      const status = resolveStatus(flags);
+      currentFile.status = status;
+
+      if (status === 'added') {
+        currentFile.oldPath = undefined;
+      } else if (status === 'deleted') {
+        currentFile.newPath = undefined;
+      } else if (status === 'renamed') {
+        if (renameFrom) currentFile.oldPath = renameFrom;
+        if (renameTo) currentFile.newPath = renameTo;
+      }
+
       continue;
     }
 

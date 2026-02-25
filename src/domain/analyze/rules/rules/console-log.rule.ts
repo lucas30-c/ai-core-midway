@@ -7,6 +7,7 @@ export class ConsoleLogRule implements Rule {
     const findings: Finding[] = [];
 
     for (const file of ctx.diffFiles) {
+      if (!file.newPath) continue;
       for (const hunk of file.hunks) {
         for (const line of hunk.lines) {
           if (

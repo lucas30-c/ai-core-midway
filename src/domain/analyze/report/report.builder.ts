@@ -1,4 +1,5 @@
 import { Finding } from '../rules/rule.types';
+import { ImpactAnalysis } from '../impact/impact.types';
 import { ReportModel } from './report.model';
 
 export function buildReportModel(input: {
@@ -9,9 +10,10 @@ export function buildReportModel(input: {
     deletions: number;
   };
   findings: Finding[];
+  impact?: ImpactAnalysis;
 }): ReportModel {
   return {
-    schemaVersion: '1.0',
+    schemaVersion: '2.0.0',
     generatedAt: new Date().toISOString(),
     summary: {
       risk: input.risk,
@@ -27,5 +29,6 @@ export function buildReportModel(input: {
       line: f.range?.start,
       message: f.message,
     })),
+    impact: input.impact,
   };
 }

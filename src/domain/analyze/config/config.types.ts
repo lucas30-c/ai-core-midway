@@ -12,6 +12,7 @@ export interface BoundaryRuleConfig {
 export interface SeverityConfig {
   boundary: 'HIGH' | 'MEDIUM' | 'LOW';
   runtime: 'HIGH' | 'MEDIUM' | 'LOW';
+  toolOverrides?: Record<string, 'HIGH' | 'MEDIUM' | 'LOW'>;
 }
 
 export interface AiDebtConfig {

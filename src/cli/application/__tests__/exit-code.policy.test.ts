@@ -6,7 +6,7 @@ function makeReport(
   items: Array<{ severity: 'HIGH' | 'MEDIUM' | 'LOW'; ruleId?: string }>
 ): ReportModel {
   return {
-    schemaVersion: '1.0',
+    schemaVersion: '2.0.0',
     generatedAt: new Date().toISOString(),
     summary: {
       risk: 'LOW',

@@ -1,3 +1,5 @@
+import { ImpactAnalysis } from '../impact/impact.types';
+
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
 
 export interface ReportItem {
@@ -9,7 +11,7 @@ export interface ReportItem {
 }
 
 export interface ReportModel {
-  schemaVersion: '1.0';
+  schemaVersion: '2.0.0';
   generatedAt: string;
   summary: {
     risk: RiskLevel;
@@ -19,4 +21,5 @@ export interface ReportModel {
     findingsCount: number;
   };
   items: ReportItem[];
+  impact?: ImpactAnalysis;
 }

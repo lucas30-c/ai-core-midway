@@ -7,8 +7,8 @@ export class AnyTypeRule implements Rule {
     const findings: Finding[] = [];
 
     for (const file of ctx.diffFiles) {
-      // Only check TS files
-      if (!/\.(ts|tsx)$/.test(file.newPath)) continue;
+      // Only check TS files; skip deleted files (no newPath)
+      if (!file.newPath || !/\.(ts|tsx)$/.test(file.newPath)) continue;
 
       for (const hunk of file.hunks) {
         for (const line of hunk.lines) {

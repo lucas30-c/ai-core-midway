@@ -3,13 +3,20 @@ import { Finding } from '../../rules/rule.types';
 
 export function adaptTscDiagnosticsToFindings(
   diags: readonly ts.Diagnostic[],
-  cwd: string
+  cwd: string,
+  toolOverrides?: Record<string, 'HIGH' | 'MEDIUM' | 'LOW'>
 ): Finding[] {
   const out: Finding[] = [];
 
   for (const d of diags) {
     const msg = ts.flattenDiagnosticMessageText(d.messageText, '\n');
     const code = d.code;
+    const ruleId = `tsc:${code}`;
+    let severity: 'HIGH' | 'MEDIUM' | 'LOW' =
+      d.category === ts.DiagnosticCategory.Error ? 'HIGH' : 'MEDIUM';
+    if (toolOverrides?.[ruleId]) {
+      severity = toolOverrides[ruleId];
+    }
 
     let file = '__tsc__';
     let range: { start: number; end: number } | undefined;
@@ -22,8 +29,8 @@ export function adaptTscDiagnosticsToFindings(
 
     out.push({
       id: `F_TSC_${code}_${hash(`${file}:${range?.start ?? 0}:${msg}`)}`,
-      ruleId: `tsc:${code}`,
-      severity: d.category === ts.DiagnosticCategory.Error ? 'HIGH' : 'MEDIUM',
+      ruleId,
+      severity,
       confidence: 0.98,
       file,
       range,

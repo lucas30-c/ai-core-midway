@@ -2,7 +2,7 @@ import { renderReport } from '../renderers';
 import { ReportModel } from '../../../domain/analyze/report/report.model';
 
 const mockReport: ReportModel = {
-  schemaVersion: '1.0',
+  schemaVersion: '2.0.0',
   generatedAt: '2026-02-25T12:00:00.000Z',
   summary: {
     risk: 'LOW',
@@ -26,7 +26,7 @@ describe('renderReport', () => {
     it('wraps report with schemaVersion', () => {
       const result = renderReport(mockReport, 'json');
       const parsed = JSON.parse(result);
-      expect(parsed.schemaVersion).toBe('1.0.0');
+      expect(parsed.schemaVersion).toBe('2.0.0');
     });
 
     it('includes engine metadata', () => {

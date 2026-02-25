@@ -8,7 +8,17 @@ export interface AnalyzeCommandOptions {
   failOn: 'error' | 'warning';
   tscMode: 'fast' | 'full';
   cwd: string;
-  config?: string; // path to .ai-debt.json config file
+  config?: string;
+
+  // Phase 2 additions
+  kbDir?: string[];
+  kbGlob?: string;
+  kbOff?: boolean;
+  llmOff?: boolean;
+  llmProvider?: string;
+  llmModel?: string;
+  llmBaseUrl?: string;
+  llmApiKey?: string;
 }
 
 export enum ExitCode {

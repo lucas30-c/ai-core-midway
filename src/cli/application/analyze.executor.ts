@@ -10,11 +10,21 @@ import { writeOutput } from '../adapters/output.writer';
 import { resolveExitCode } from './exit-code.policy';
 import { AnalyzeService } from '../../modules/analyze/analyze.service';
 import { AiDebtConfig } from '../../domain/analyze/config/config.types';
+import { initKbProvider } from '../adapters/kb/kb.adapter';
+import { initLlmProvider } from '../adapters/llm/llm.adapter';
+import { KnowledgeProvider } from '../../domain/knowledge/kb.types';
 
 function createAnalyzer(cwd: string, config: AiDebtConfig) {
   const service = new AnalyzeService();
   return {
-    analyzeDiff(diff: string, opts: { tscMode: 'fast' | 'full' }) {
+    analyzeDiff(
+      diff: string,
+      opts: {
+        tscMode: 'fast' | 'full';
+        kbProvider?: KnowledgeProvider | null;
+        llmProvider?: import('../../core/llm/llm.types').LlmProvider | null;
+      }
+    ) {
       return service.analyzeDiff(diff, { ...opts, cwd, config });
     },
   };
@@ -43,12 +53,37 @@ async function resolveDiffSource(
 export async function executeAnalyzeCommand(
   options: AnalyzeCommandOptions
 ): Promise<ExitCode> {
+  let kbProvider: KnowledgeProvider | null = null;
+
   try {
     const config = loadAiDebtConfig(options.cwd, options.config);
     const diff = await resolveDiffSource(options);
+
+    // Phase 2: init KB provider
+    kbProvider = initKbProvider({
+      kbOff: options.kbOff,
+      kbDirs: options.kbDir,
+      kbGlob: options.kbGlob,
+      cwd: options.cwd,
+    });
+    if (kbProvider) {
+      await kbProvider.initialize();
+    }
+
+    // Phase 2: init LLM provider
+    const llmProvider = initLlmProvider({
+      llmOff: options.llmOff,
+      llmProvider: options.llmProvider,
+      llmModel: options.llmModel,
+      llmBaseUrl: options.llmBaseUrl,
+      llmApiKey: options.llmApiKey,
+    });
+
     const analyzer = createAnalyzer(options.cwd, config);
     const result = await analyzer.analyzeDiff(diff, {
       tscMode: options.tscMode,
+      kbProvider,
+      llmProvider,
     });
     const rendered = renderReport(result.report, options.format);
     await writeOutput(rendered, options.out);
@@ -62,5 +97,9 @@ export async function executeAnalyzeCommand(
       `AI_DEBT_CLI_ERROR: ${err?.message ?? 'Unknown error'}\n`
     );
     return ExitCode.ERROR;
+  } finally {
+    if (kbProvider) {
+      kbProvider.close();
+    }
   }
 }

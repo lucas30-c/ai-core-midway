@@ -1,6 +1,8 @@
 import { Finding } from '../rules/rule.types';
 import { ImpactAnalysis } from '../impact/impact.types';
 import { ReportModel } from './report.model';
+import { RetrievedKnowledgeChunk } from '../../knowledge/kb.types';
+import { LlmDraft } from '../impact/impact.enricher';
 
 export function buildReportModel(input: {
   risk: 'LOW' | 'MEDIUM' | 'HIGH';
@@ -11,8 +13,13 @@ export function buildReportModel(input: {
   };
   findings: Finding[];
   impact?: ImpactAnalysis;
+  retrievedKnowledge?: {
+    provider: string;
+    chunks: RetrievedKnowledgeChunk[];
+  };
+  llmDraft?: LlmDraft | null;
 }): ReportModel {
-  return {
+  const report: ReportModel = {
     schemaVersion: '2.0.0',
     generatedAt: new Date().toISOString(),
     summary: {
@@ -31,4 +38,14 @@ export function buildReportModel(input: {
     })),
     impact: input.impact,
   };
+
+  if (input.retrievedKnowledge) {
+    report.retrievedKnowledge = input.retrievedKnowledge;
+  }
+
+  if (input.llmDraft) {
+    report.llmDraft = input.llmDraft;
+  }
+
+  return report;
 }

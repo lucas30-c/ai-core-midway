@@ -20,6 +20,14 @@ export function registerAnalyzeCommand(program: Command): void {
     .option('--fail-on <level>', 'Fail threshold (error|warning)', 'error')
     .option('--tsc-mode <mode>', 'TypeScript check mode (fast|full)', 'fast')
     .option('--config <path>', 'Path to .ai-debt.json config file')
+    .option('--kb-dir <path...>', 'Knowledge base directories (repeatable)')
+    .option('--kb-glob <pattern>', 'Files to index within kb-dir', '**/*.md')
+    .option('--kb-off', 'Disable KB even if --kb-dir is set')
+    .option('--llm-off', 'Disable LLM enrichment')
+    .option('--llm-provider <name>', 'LLM provider (openai-compatible|mock)')
+    .option('--llm-model <name>', 'LLM model override')
+    .option('--llm-base-url <url>', 'LLM base URL override (without /v1)')
+    .option('--llm-api-key <key>', 'LLM API key override')
     .action(async (opts: Record<string, string | boolean>) => {
       // Source exclusivity check
       const sources = [
@@ -74,6 +82,14 @@ export function registerAnalyzeCommand(program: Command): void {
         tscMode,
         cwd: (opts.cwd as string) || process.cwd(),
         config: opts.config as string | undefined,
+        kbDir: opts.kbDir as unknown as string[] | undefined,
+        kbGlob: opts.kbGlob as string | undefined,
+        kbOff: opts.kbOff as boolean | undefined,
+        llmOff: opts.llmOff as boolean | undefined,
+        llmProvider: opts.llmProvider as string | undefined,
+        llmModel: opts.llmModel as string | undefined,
+        llmBaseUrl: opts.llmBaseUrl as string | undefined,
+        llmApiKey: opts.llmApiKey as string | undefined,
       };
 
       const exitCode = await executeAnalyzeCommand(options);

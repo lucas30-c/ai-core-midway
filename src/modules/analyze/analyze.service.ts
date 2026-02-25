@@ -19,6 +19,16 @@ import {
 import { AiDebtConfig } from '../../domain/analyze/config/config.types';
 import { DEFAULT_CONFIG } from '../../domain/analyze/config/default.config';
 import { buildImpactAnalysis } from '../../domain/analyze/impact/impact.builder';
+import {
+  enrichImpact,
+  LlmDraft,
+} from '../../domain/analyze/impact/impact.enricher';
+import {
+  KnowledgeProvider,
+  KnowledgeChunk,
+  RetrievedKnowledgeChunk,
+} from '../../domain/knowledge/kb.types';
+import { LlmProvider } from '../../core/llm/llm.types';
 
 export interface AnalyzeOptions {
   requestId?: string;
@@ -26,6 +36,8 @@ export interface AnalyzeOptions {
   tscMode?: 'fast' | 'full';
   cwd?: string;
   config?: AiDebtConfig;
+  kbProvider?: KnowledgeProvider | null;
+  llmProvider?: LlmProvider | null;
 }
 
 export interface AnalyzeResult {
@@ -43,13 +55,6 @@ function riskLevel(findings: Finding[]): RiskLevel {
   return 'LOW';
 }
 
-/**
- * Normalize changed files from diff to the format expected by rules:
- * - Relative to cwd (no absolute paths)
- * - POSIX separators (/) only
- * - No a/ or b/ prefixes
- * - No leading / or ./
- */
 function normalizeChangedFiles(diffFiles: DiffFile[]): string[] {
   return diffFiles
     .map(f => f.newPath ?? f.oldPath)
@@ -57,14 +62,27 @@ function normalizeChangedFiles(diffFiles: DiffFile[]): string[] {
       (p): p is string => !!p && p !== '/dev/null' && !p.startsWith('/dev/null')
     )
     .map(p => {
-      // Remove a/ or b/ prefix if present (git diff format)
       let normalized = p.replace(/^[ab]\//, '');
-      // Remove leading / or ./
       normalized = normalized.replace(/^\.?\//, '');
-      // Convert backslashes to forward slashes (POSIX)
       normalized = normalized.replace(/\\/g, '/');
       return normalized;
     });
+}
+
+function formatExcerpt(content: string, maxLen = 200): string {
+  const collapsed = content.replace(/\s+/g, ' ').trim();
+  if (collapsed.length <= maxLen) return collapsed;
+  return collapsed.slice(0, maxLen - 1) + '\u2026';
+}
+
+function toRetrievedChunks(
+  chunks: KnowledgeChunk[]
+): RetrievedKnowledgeChunk[] {
+  return chunks.map(c => ({
+    sourcePath: c.sourcePath,
+    heading: c.heading,
+    excerpt: formatExcerpt(c.content),
+  }));
 }
 
 @Provide()
@@ -103,7 +121,7 @@ export class AnalyzeService {
       config,
     };
 
-    // 4. Run rule engine (hand-written rules including AST boundary)
+    // 4. Run rule engine
     const ruleEngine = new RuleEngine([
       new LargeDiffRule(),
       new ConsoleLogRule(),
@@ -113,7 +131,7 @@ export class AnalyzeService {
     ]);
     const ruleFindings = ruleEngine.run(analyzeCtx);
 
-    // 5. Run tool runners (ESLint + TSC)
+    // 5. Run tool runners
     const toolFindings = [
       ...(await new EslintRunner().run({ cwd, files: changedFiles, ...opts })),
       ...(await new TscRunner().run({
@@ -126,23 +144,58 @@ export class AnalyzeService {
 
     // 6. Merge all findings
     const findings = [...ruleFindings, ...toolFindings];
-
-    // Sort by severity
     const score = (s: string) => (s === 'HIGH' ? 3 : s === 'MEDIUM' ? 2 : 1);
     findings.sort((a, b) => score(b.severity) - score(a.severity));
 
-    const impact = buildImpactAnalysis({
+    // 7. Build deterministic impact analysis (Phase 1)
+    let impact = buildImpactAnalysis({
       findings,
       diffFiles,
       stats: analyzeCtx.stats,
       config,
     });
 
+    // 8. Phase 2: KB retrieval
+    let retrievedChunks: KnowledgeChunk[] = [];
+    const kbProvider = opts?.kbProvider;
+    if (kbProvider && kbProvider.isAvailable()) {
+      const query =
+        impact.summary +
+        ' ' +
+        impact.riskPoints.map(r => r.description).join(' ');
+      retrievedChunks = await kbProvider.search(query);
+    }
+
+    // 9. Phase 2: LLM enrichment
+    let llmDraft: LlmDraft | null = null;
+    const llmProvider = opts?.llmProvider;
+    if (llmProvider) {
+      const diffSummary = `${
+        analyzeCtx.stats.filesChanged
+      } files changed, ${insertions} insertions, ${deletions} deletions. Risk: ${riskLevel(
+        findings
+      )}.`;
+      const result = await enrichImpact(
+        impact,
+        diffSummary,
+        retrievedChunks,
+        llmProvider
+      );
+      impact = result.enrichedImpact;
+      llmDraft = result.llmDraft;
+    }
+
+    // 10. Build report
     const reportModel = buildReportModel({
       risk: riskLevel(findings),
       stats: analyzeCtx.stats,
       findings,
       impact,
+      retrievedKnowledge:
+        retrievedChunks.length > 0
+          ? { provider: 'local', chunks: toRetrievedChunks(retrievedChunks) }
+          : undefined,
+      llmDraft,
     });
 
     const markdown = renderMarkdown(reportModel);

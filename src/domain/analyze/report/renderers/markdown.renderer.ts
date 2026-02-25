@@ -75,6 +75,26 @@ export function renderMarkdown(report: ReportModel): string {
     for (const item of report.impact.regressionChecklist) {
       lines.push(`- [ ] ${escape(item)}`);
     }
+    lines.push('');
+  }
+
+  // Retrieved Knowledge section (Phase 2)
+  if (
+    report.retrievedKnowledge &&
+    report.retrievedKnowledge.chunks.length > 0
+  ) {
+    lines.push('## Retrieved Knowledge');
+    lines.push('');
+    lines.push('| Source | Heading | Excerpt |');
+    lines.push('|--------|---------|---------|');
+    for (const chunk of report.retrievedKnowledge.chunks) {
+      lines.push(
+        `| ${escape(chunk.sourcePath)} | ${escape(
+          chunk.heading ?? ''
+        )} | ${escape(chunk.excerpt)} |`
+      );
+    }
+    lines.push('');
   }
 
   return lines.join('\n');

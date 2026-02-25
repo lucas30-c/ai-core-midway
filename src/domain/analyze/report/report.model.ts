@@ -1,4 +1,5 @@
 import { ImpactAnalysis } from '../impact/impact.types';
+import { RetrievedKnowledgeChunk } from '../../knowledge/kb.types';
 
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -22,4 +23,17 @@ export interface ReportModel {
   };
   items: ReportItem[];
   impact?: ImpactAnalysis;
+
+  // Phase 2 additions (optional)
+  retrievedKnowledge?: {
+    provider: string;
+    chunks: RetrievedKnowledgeChunk[];
+  };
+
+  llmDraft?: {
+    model: string;
+    summary: string;
+    riskExplanations: Array<{ riskType: string; explanation: string }>;
+    additionalChecklist: string[];
+  };
 }

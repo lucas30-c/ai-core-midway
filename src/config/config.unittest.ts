@@ -12,7 +12,11 @@ export default {
       enableConsole: true,
     },
     clients: {
-      coreLogger: { enableFile: false, enableError: false, enableConsole: true },
+      coreLogger: {
+        enableFile: false,
+        enableError: false,
+        enableConsole: true,
+      },
       appLogger: { enableFile: false, enableError: false, enableConsole: true },
     },
   },

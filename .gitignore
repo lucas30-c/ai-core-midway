@@ -12,3 +12,6 @@ run/
 .tsbuildinfo
 .tsbuildinfo.*
 .env
+
+# npm pack output
+*.tgz

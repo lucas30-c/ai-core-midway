@@ -13,7 +13,7 @@ export function renderReport(
       {
         schemaVersion: '1.0.0',
         engine: {
-          name: 'ai-debt',
+          name: pkg.name,
           version: pkg.version,
         },
         analysis: report,

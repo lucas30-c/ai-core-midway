@@ -1,12 +1,43 @@
-# my_midway_project
+# tech-debt
 
-## QuickStart
+AI-powered technical debt analyzer for Git diffs.
 
-<!-- add docs here for user -->
+## Installation
 
-see [midway docs][midway] for more detail.
+```bash
+# Global install
+npm i -g tech-debt
 
-### Development
+# Or use npx (no install needed)
+npx tech-debt analyze --git HEAD
+```
+
+## Quick Start
+
+```bash
+tech-debt analyze --git-range origin/main..HEAD --fail-on warning --out tech-debt-report.md
+```
+
+## Usage
+
+```bash
+# Analyze current HEAD
+tech-debt analyze --git HEAD
+
+# Analyze a git range
+tech-debt analyze --git-range origin/main..HEAD
+
+# Output to file
+tech-debt analyze --git HEAD --out report.md
+
+# JSON format
+tech-debt analyze --git HEAD --format json
+
+# Fail on warning severity (for CI)
+tech-debt analyze --git-range origin/main..HEAD --fail-on warning
+```
+
+## Development
 
 ```bash
 $ npm i
@@ -14,13 +45,7 @@ $ npm run dev
 $ open http://localhost:7001/
 ```
 
-### Deploy
-
-```bash
-$ npm start
-```
-
-### npm scripts
+## npm scripts
 
 - Use `npm run lint` to check code style.
 - Use `npm test` to run unit test.
@@ -28,8 +53,6 @@ $ npm start
 ## GitHub Actions CI Integration
 
 This project includes automated technical debt analysis on every Pull Request.
-
-> **Note:** Workflow name is `tech-debt` (for future product rename). The CLI command remains `ai-debt`.
 
 ### How It Works
 
@@ -63,5 +86,6 @@ After the workflow runs, download the report:
 - Runtime errors (exit 2) also fail the workflow
 - Manual analysis available via `AI Debt Analysis (Manual)` workflow (workflow_dispatch)
 
+## License
 
-[midway]: https://midwayjs.org
+MIT

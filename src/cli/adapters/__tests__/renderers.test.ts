@@ -32,7 +32,7 @@ describe('renderReport', () => {
     it('includes engine metadata', () => {
       const result = renderReport(mockReport, 'json');
       const parsed = JSON.parse(result);
-      expect(parsed.engine.name).toBe('ai-debt');
+      expect(parsed.engine.name).toBe('tech-debt');
       expect(typeof parsed.engine.version).toBe('string');
       expect(parsed.engine.version).toMatch(/^\d+\.\d+\.\d+/);
     });

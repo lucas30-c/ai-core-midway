@@ -3,25 +3,51 @@
 面向工程实践的 PR 影响面分析工具
 Deterministic 静态分析 + 本地知识库 (RAG) + 安全 LLM 增强
 
+🚀 快速开始
+1️⃣ 安装
+全局安装
+npm install -g @finn_ryu/tech-debt
+或作为项目依赖
+npm install --save-dev @finn_ryu/tech-debt
+2️⃣ 最简单使用（只做确定性分析）
+tech-debt analyze --git-range origin/main..HEAD
+
+适用于：
+
+日常 PR 自查
+
+CI 预检查
+
+不需要知识库和 LLM 的场景
+
+3️⃣ 输出 JSON（用于 CI / 自动化系统）
+tech-debt analyze \
+  --git-range origin/main..HEAD \
+  --format json
+4️⃣ 输出 Markdown 报告（适合 PR 评论）
+tech-debt analyze \
+  --git-range origin/main..HEAD \
+  --format markdown
 📌 项目简介
 
-tech-debt 是一个用于分析 Git 代码变更影响面的 CLI 工具。
+tech-debt 是一个用于分析 Git 代码变更影响面 的 CLI 工具。
 
-它的目标不是“生成漂亮报告”，而是：
+它的目标不是“生成漂亮报告”，而是帮助你：
 
-帮你判断这次改动会影响哪些层
+判断这次改动会影响哪些层（touchedAreas）
 
 是否违反架构边界
 
-有哪些潜在风险点
+存在哪些潜在风险点
 
 需要补充哪些回归测试
 
 是否触发技术债规则
 
-工具核心思想：
+🧭 核心理念
 
-先做完全 deterministic 的工程分析，再用 LLM 进行语义增强，但绝不改变事实。
+先做完全 deterministic 的工程分析，
+再用 LLM 进行语义增强，但绝不改变事实。
 
 ✨ 核心能力
 Phase 1 — 工程级确定性分析
@@ -38,9 +64,9 @@ AST 规则引擎
 
 Markdown / JSON 双输出
 
-严格 schemaVersion 2.0.0
+严格 schemaVersion: "2.0.0"
 
-Phase 2 — 语义增强能力
+Phase 2 — 语义增强能力（可选）
 
 可选启用：
 
@@ -55,70 +81,6 @@ LLM 安全增强（仅增强 summary 和 checklist）
 如果 LLM 或 KB 不可用：
 
 工具自动优雅降级，不影响基础分析结果。
-
-🚀 安装
-
-全局安装：
-
-npm install -g @finn_ryu/tech-debt
-
-或项目内使用：
-
-npm install --save-dev @finn_ryu/tech-debt
-🛠 基础用法
-1️⃣ 最简单用法（只做确定性分析）
-tech-debt analyze --git-range origin/main..HEAD
-
-适用于：
-
-日常 PR 自查
-
-CI 预检查
-
-不需要知识库和 LLM
-
-2️⃣ 指定工作目录
-tech-debt analyze \
-  --git-range HEAD~1..HEAD \
-  --cwd ./my-project
-
-适用于：
-
-monorepo
-
-外部 repo 分析
-
-CI 指定工作目录
-
-3️⃣ 输出 JSON（用于 CI 或系统集成）
-tech-debt analyze \
-  --git-range origin/main..HEAD \
-  --format json
-
-输出结构：
-
-{
-  "schemaVersion": "2.0.0",
-  "engine": { "name": "...", "version": "..." },
-  "analysis": {
-    "schemaVersion": "2.0.0",
-    "summary": {...},
-    "items": [...],
-    "impact": {...}
-  }
-}
-4️⃣ 输出 Markdown 报告
-tech-debt analyze \
-  --git-range origin/main..HEAD \
-  --format markdown
-
-适用于：
-
-直接贴到 PR 评论
-
-内部评审报告
-
-周报
 
 📚 使用本地知识库（RAG）
 
@@ -136,16 +98,15 @@ tech-debt analyze \
   --git-range origin/main..HEAD \
   --kb-dir ./docs \
   --kb-dir ./adr
+支持特性
 
-支持：
-
-多目录
+多目录支持
 
 默认扫描 **/*.md
 
 自动增量索引
 
-索引存储在：
+索引文件存储在：
 
 .project-root/.tech-debt/
   ├── kb.sqlite
@@ -165,7 +126,7 @@ LLM 是可选的。
 
 方式一：使用 OpenAI 兼容接口
 
-环境变量：
+设置环境变量：
 
 export TECH_DEBT_LLM_PROVIDER=openai-compatible
 export TECH_DEBT_LLM_MODEL=gpt-4o-mini
@@ -175,7 +136,7 @@ export TECH_DEBT_LLM_API_KEY=xxx
 然后执行：
 
 tech-debt analyze --git-range HEAD~1..HEAD
-方式二：使用 mock（测试用）
+方式二：使用 mock（用于测试）
 export TECH_DEBT_LLM_PROVIDER=mock
 export TECH_DEBT_LLM_MODEL=mock
 禁用 LLM
@@ -196,7 +157,7 @@ tech-debt analyze --llm-off
 --llm-api-key	指定 API Key
 ⚙ 配置文件说明
 
-.ai-debt.json
+配置文件：.ai-debt.json
 
 示例：
 

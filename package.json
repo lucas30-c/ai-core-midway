@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "private": true,
+  "bin": {
+    "ai-debt": "dist/cli/index.js"
+  },
   "dependencies": {
     "@midwayjs/bootstrap": "^3.12.0",
     "@midwayjs/core": "^3.12.0",
@@ -11,6 +14,7 @@
     "@midwayjs/logger": "^3.1.0",
     "@midwayjs/validate": "^3.20.22",
     "better-sqlite3": "^12.6.2",
+    "commander": "^11.1.0",
     "dotenv": "^17.3.1",
     "execa": "^5.1.1",
     "zod": "^4.3.6"

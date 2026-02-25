@@ -1,9 +1,7 @@
-name: AI Debt Analysis
+name: AI Debt Analysis (Manual)
 
 on:
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   analyze:
@@ -17,7 +15,7 @@ jobs:
         with:
           node-version: 18
 
-      - run: npm install
+      - run: npm ci
 
       - run: npm run build
 
@@ -31,6 +29,8 @@ jobs:
             --out ai-debt-report.md
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: ai-debt-report
           path: ai-debt-report.md
+          if-no-files-found: warn

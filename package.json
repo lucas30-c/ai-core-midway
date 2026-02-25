@@ -45,7 +45,8 @@
     "lint": "mwts check",
     "lint:fix": "mwts fix",
     "ci": "npm run cov",
-    "build": "mwtsc --cleanOutDir"
+    "build": "mwtsc --cleanOutDir",
+    "ci:tech-debt": "git fetch origin main && node dist/cli/index.js analyze --git-range origin/main..HEAD --fail-on warning --out tech-debt-report.md"
   },
   "repository": {
     "type": "git",

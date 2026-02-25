@@ -1,0 +1,42 @@
+name: tech-debt
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Run tech-debt (ai-debt CLI)
+        run: |
+          BASE="origin/${{ github.base_ref }}"
+          HEAD="${{ github.sha }}"
+          echo "Analyzing range: $BASE..$HEAD"
+
+          # Ensure base ref is available (create local tracking ref)
+          git fetch origin "${{ github.base_ref }}":"refs/remotes/origin/${{ github.base_ref }}"
+
+          node dist/cli/index.js analyze \
+            --git-range "$BASE..$HEAD" \
+            --fail-on warning \
+            --format markdown \
+            --out tech-debt-report.md
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tech-debt-report
+          path: tech-debt-report.md
+          if-no-files-found: warn

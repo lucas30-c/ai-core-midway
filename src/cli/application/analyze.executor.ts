@@ -3,16 +3,17 @@ import { CliError, UsageError } from '../errors/cli.errors';
 import { readDiffFile } from '../adapters/diff-file.source';
 import { readGitCommitDiff } from '../adapters/diff-sources/git-commit.source';
 import { readGitRangeDiff } from '../adapters/diff-sources/git-range.source';
+import { readGitStagedDiff } from '../adapters/diff-sources/git-staged.source';
 import { renderReport } from '../adapters/renderers';
 import { writeOutput } from '../adapters/output.writer';
 import { resolveExitCode } from './exit-code.policy';
 import { AnalyzeService } from '../../modules/analyze/analyze.service';
 
-function createAnalyzer() {
+function createAnalyzer(cwd: string) {
   const service = new AnalyzeService();
   return {
     analyzeDiff(diff: string, opts: { tscMode: 'fast' | 'full' }) {
-      return service.analyzeDiff(diff, opts);
+      return service.analyzeDiff(diff, { ...opts, cwd });
     },
   };
 }
@@ -29,8 +30,11 @@ async function resolveDiffSource(
   if (options.gitRange) {
     return readGitRangeDiff(options.gitRange, options.cwd);
   }
+  if (options.staged) {
+    return readGitStagedDiff(options.cwd);
+  }
   throw new UsageError(
-    'No diff source provided. Use --diff-file, --git, or --git-range'
+    'No diff source provided. Use --diff-file, --git, --git-range, or --staged'
   );
 }
 
@@ -39,7 +43,7 @@ export async function executeAnalyzeCommand(
 ): Promise<ExitCode> {
   try {
     const diff = await resolveDiffSource(options);
-    const analyzer = createAnalyzer();
+    const analyzer = createAnalyzer(options.cwd);
     const result = await analyzer.analyzeDiff(diff, {
       tscMode: options.tscMode,
     });

@@ -2,6 +2,7 @@ export interface AnalyzeCommandOptions {
   diffFile?: string;
   git?: string;
   gitRange?: string;
+  staged?: boolean;
   format: 'markdown' | 'json';
   out?: string;
   failOn: 'error' | 'warning';

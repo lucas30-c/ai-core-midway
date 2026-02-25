@@ -9,12 +9,16 @@ import { TscRunner } from '../../domain/analyze/tools/tsc/tsc.runner';
 import { AnalyzeContext, Finding } from '../../domain/analyze/rules/rule.types';
 import { buildReportModel } from '../../domain/analyze/report/report.builder';
 import { renderMarkdown } from '../../domain/analyze/report/renderers/markdown.renderer';
-import { ReportModel, RiskLevel } from '../../domain/analyze/report/report.model';
+import {
+  ReportModel,
+  RiskLevel,
+} from '../../domain/analyze/report/report.model';
 
 export interface AnalyzeOptions {
   requestId?: string;
   traceId?: string;
   tscMode?: 'fast' | 'full';
+  cwd?: string;
 }
 
 export interface AnalyzeResult {
@@ -34,7 +38,10 @@ function riskLevel(findings: Finding[]): RiskLevel {
 
 @Provide()
 export class AnalyzeService {
-  async analyzeDiff(diff: string, opts?: AnalyzeOptions): Promise<AnalyzeResult> {
+  async analyzeDiff(
+    diff: string,
+    opts?: AnalyzeOptions
+  ): Promise<AnalyzeResult> {
     const tscMode = opts?.tscMode || 'fast';
 
     // 1. Parse diff
@@ -71,9 +78,15 @@ export class AnalyzeService {
       .filter(p => !p.startsWith('/dev/null') && p !== '/dev/null');
 
     // 5. Run tool runners (ESLint + TSC)
+    const cwd = opts?.cwd || process.cwd();
     const toolFindings = [
-      ...(await new EslintRunner().run({ cwd: process.cwd(), files: changedFiles, ...opts })),
-      ...(await new TscRunner().run({ cwd: process.cwd(), files: changedFiles, tscMode, ...opts })),
+      ...(await new EslintRunner().run({ cwd, files: changedFiles, ...opts })),
+      ...(await new TscRunner().run({
+        cwd,
+        files: changedFiles,
+        tscMode,
+        ...opts,
+      })),
     ];
 
     // 6. Merge all findings

@@ -24,6 +24,7 @@
     "*.ts",
     "dist",
     "node_modules",
-    "test"
+    "test",
+    "fixtures"
   ]
 }

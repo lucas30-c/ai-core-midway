@@ -4,16 +4,18 @@ import { readDiffFile } from '../adapters/diff-file.source';
 import { readGitCommitDiff } from '../adapters/diff-sources/git-commit.source';
 import { readGitRangeDiff } from '../adapters/diff-sources/git-range.source';
 import { readGitStagedDiff } from '../adapters/diff-sources/git-staged.source';
+import { loadAiDebtConfig } from '../adapters/config/config.loader';
 import { renderReport } from '../adapters/renderers';
 import { writeOutput } from '../adapters/output.writer';
 import { resolveExitCode } from './exit-code.policy';
 import { AnalyzeService } from '../../modules/analyze/analyze.service';
+import { AiDebtConfig } from '../../domain/analyze/config/config.types';
 
-function createAnalyzer(cwd: string) {
+function createAnalyzer(cwd: string, config: AiDebtConfig) {
   const service = new AnalyzeService();
   return {
     analyzeDiff(diff: string, opts: { tscMode: 'fast' | 'full' }) {
-      return service.analyzeDiff(diff, { ...opts, cwd });
+      return service.analyzeDiff(diff, { ...opts, cwd, config });
     },
   };
 }
@@ -42,8 +44,9 @@ export async function executeAnalyzeCommand(
   options: AnalyzeCommandOptions
 ): Promise<ExitCode> {
   try {
+    const config = loadAiDebtConfig(options.cwd, options.config);
     const diff = await resolveDiffSource(options);
-    const analyzer = createAnalyzer(options.cwd);
+    const analyzer = createAnalyzer(options.cwd, config);
     const result = await analyzer.analyzeDiff(diff, {
       tscMode: options.tscMode,
     });

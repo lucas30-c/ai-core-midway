@@ -5,7 +5,9 @@ import { Context, NextFunction } from '@midwayjs/koa';
  * 生成随机 ID
  */
 function randId(prefix: string) {
-  return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  return `${prefix}_${Date.now().toString(36)}_${Math.random()
+    .toString(36)
+    .slice(2, 10)}`;
 }
 
 /**

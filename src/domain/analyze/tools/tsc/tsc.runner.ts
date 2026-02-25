@@ -16,7 +16,11 @@ export class TscRunner implements ToolRunner {
     const mode = ctx.tscMode || 'fast';
 
     try {
-      const configPath = ts.findConfigFile(ctx.cwd, ts.sys.fileExists, 'tsconfig.json');
+      const configPath = ts.findConfigFile(
+        ctx.cwd,
+        ts.sys.fileExists,
+        'tsconfig.json'
+      );
       if (!configPath) return [];
 
       const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
@@ -51,20 +55,21 @@ export class TscRunner implements ToolRunner {
 
       // fast: 不用过滤（本来就只编译变更文件）
       // full: 继续过滤到变更文件（避免全仓噪音）
-      const filtered = mode === 'full'
-        ? diags.filter(d => {
-            const fileName = d.file?.fileName;
-            if (!fileName) return true; // 全局/tsconfig 错误也要保留
-            const rel = fileName.replace(ctx.cwd + '/', '');
-            return changed.has(rel);
-          })
-        : diags;
+      const filtered =
+        mode === 'full'
+          ? diags.filter(d => {
+              const fileName = d.file?.fileName;
+              if (!fileName) return true; // 全局/tsconfig 错误也要保留
+              const rel = fileName.replace(ctx.cwd + '/', '');
+              return changed.has(rel);
+            })
+          : diags;
 
       return adaptTscDiagnosticsToFindings(filtered, ctx.cwd);
     } catch (e: any) {
       return [
         {
-          id: `F_TOOL_TSC_FAILED`,
+          id: 'F_TOOL_TSC_FAILED',
           ruleId: 'tool:tsc',
           severity: 'HIGH',
           confidence: 1,

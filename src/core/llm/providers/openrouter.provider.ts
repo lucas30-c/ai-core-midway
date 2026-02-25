@@ -1,7 +1,12 @@
 import { Provide, Config } from '@midwayjs/core';
 import { AppError } from '../../../common/errors/app.error';
 import { ErrorCodes } from '../../../common/errors/error.codes';
-import { ChatMessage, ChatOptions, ChatResult, LlmProvider } from '../llm.types';
+import {
+  ChatMessage,
+  ChatOptions,
+  ChatResult,
+  LlmProvider,
+} from '../llm.types';
 
 @Provide()
 export class OpenRouterProvider implements LlmProvider {
@@ -11,7 +16,10 @@ export class OpenRouterProvider implements LlmProvider {
   cfg: any;
 
   private baseUrl() {
-    return String(this.cfg?.baseUrl || 'https://openrouter.ai/api/v1').replace(/\/$/, '');
+    return String(this.cfg?.baseUrl || 'https://openrouter.ai/api/v1').replace(
+      /\/$/,
+      ''
+    );
   }
 
   private headers() {
@@ -50,7 +58,11 @@ export class OpenRouterProvider implements LlmProvider {
       });
 
       if (!resp.ok) {
-        return { ok: false, status: resp.status, errText: await resp.text().catch(() => '') };
+        return {
+          ok: false,
+          status: resp.status,
+          errText: await resp.text().catch(() => ''),
+        };
       }
       return { ok: true, data: await resp.json() };
     };
@@ -141,7 +153,11 @@ export class OpenRouterProvider implements LlmProvider {
       return { model: primary, fallbackUsed: false };
     } catch (e: any) {
       const status = e?.status ?? 0;
-      if (fallback && e?.code === ErrorCodes.UPSTREAM && this.shouldFallback(status)) {
+      if (
+        fallback &&
+        e?.code === ErrorCodes.UPSTREAM &&
+        this.shouldFallback(status)
+      ) {
         await runStream(fallback);
         return { model: fallback, fallbackUsed: true };
       }

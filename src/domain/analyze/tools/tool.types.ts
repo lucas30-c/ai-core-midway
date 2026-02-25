@@ -1,8 +1,8 @@
 import { Finding } from '../rules/rule.types';
 
 export interface ToolRunContext {
-  cwd: string;              // repo root
-  files: string[];          // changed files (filtered)
+  cwd: string; // repo root
+  files: string[]; // changed files (filtered)
   requestId?: string;
   traceId?: string;
   tscMode?: 'fast' | 'full';

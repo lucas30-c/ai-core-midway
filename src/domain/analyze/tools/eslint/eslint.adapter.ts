@@ -4,7 +4,8 @@ export function adaptEslintJsonToFindings(eslintJson: any[]): Finding[] {
   const out: Finding[] = [];
 
   for (const fileReport of eslintJson || []) {
-    const filePath = fileReport.filePath || fileReport.filePath?.toString?.() || '';
+    const filePath =
+      fileReport.filePath || fileReport.filePath?.toString?.() || '';
     const messages = fileReport.messages || [];
 
     for (const m of messages) {
@@ -12,7 +13,9 @@ export function adaptEslintJsonToFindings(eslintJson: any[]): Finding[] {
       const severity = m.severity === 2 ? 'HIGH' : 'MEDIUM';
 
       out.push({
-        id: `F_ESLINT_${hash(`${filePath}:${m.line}:${m.ruleId}:${m.message}`)}`,
+        id: `F_ESLINT_${hash(
+          `${filePath}:${m.line}:${m.ruleId}:${m.message}`
+        )}`,
         ruleId: `eslint:${m.ruleId || 'unknown'}`,
         severity,
         confidence: 0.95,

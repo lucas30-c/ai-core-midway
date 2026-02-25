@@ -3,7 +3,7 @@ import { ReportModel } from '../report.model';
 export function renderMarkdown(report: ReportModel): string {
   const lines: string[] = [];
 
-  lines.push(`# Code Risk Report`);
+  lines.push('# Code Risk Report');
   lines.push('');
   lines.push(`**Risk Level**: ${report.summary.risk}`);
   lines.push('');
@@ -15,17 +15,19 @@ export function renderMarkdown(report: ReportModel): string {
   lines.push('');
 
   if (report.items.length > 0) {
-    lines.push(`## Findings`);
-    lines.push(`| Severity | Rule | File | Line | Message |`);
-    lines.push(`|---|---|---|---|---|`);
+    lines.push('## Findings');
+    lines.push('| Severity | Rule | File | Line | Message |');
+    lines.push('|---|---|---|---|---|');
 
     for (const item of report.items) {
       lines.push(
-        `| ${item.severity} | ${escape(item.ruleId)} | ${escape(item.file)} | ${item.line ?? ''} | ${escape(item.message)} |`
+        `| ${item.severity} | ${escape(item.ruleId)} | ${escape(item.file)} | ${
+          item.line ?? ''
+        } | ${escape(item.message)} |`
       );
     }
   } else {
-    lines.push(`## No Issues Found 🎉`);
+    lines.push('## No Issues Found 🎉');
   }
 
   return lines.join('\n');

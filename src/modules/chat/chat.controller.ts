@@ -99,7 +99,9 @@ export class ChatController {
 
     const send = (event: string, data: any) => {
       ctx.res.write(`event: ${event}\n`);
-      ctx.res.write(`data: ${typeof data === 'string' ? data : JSON.stringify(data)}\n\n`);
+      ctx.res.write(
+        `data: ${typeof data === 'string' ? data : JSON.stringify(data)}\n\n`
+      );
     };
 
     send('meta', { requestId, traceId });
@@ -108,7 +110,7 @@ export class ChatController {
       const out = await this.llm.chatStream(body.messages, {
         temperature: body.temperature,
         model: body.model,
-        onToken: (tok) => send('token', tok),
+        onToken: tok => send('token', tok),
       });
 
       model = out.model;

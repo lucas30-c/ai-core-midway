@@ -37,7 +37,7 @@ export class EslintRunner implements ToolRunner {
       // 工具本身挂了：当成一个 HIGH finding 返回（可观测）
       return [
         {
-          id: `F_TOOL_ESLINT_FAILED`,
+          id: 'F_TOOL_ESLINT_FAILED',
           ruleId: 'tool:eslint',
           severity: 'HIGH',
           confidence: 1,

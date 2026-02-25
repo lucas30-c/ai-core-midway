@@ -13,14 +13,21 @@ export class AnyTypeRule implements Rule {
       for (const hunk of file.hunks) {
         for (const line of hunk.lines) {
           // Detect `: any` or `as any` in added lines
-          if (line.type === 'add' && /:\s*any\b|as\s+any\b/.test(line.content)) {
+          if (
+            line.type === 'add' &&
+            /:\s*any\b|as\s+any\b/.test(line.content)
+          ) {
             findings.push({
-              id: `F_ANY_TYPE_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+              id: `F_ANY_TYPE_${Date.now()}_${Math.random()
+                .toString(36)
+                .slice(2, 6)}`,
               ruleId: this.id,
               severity: 'MEDIUM',
               confidence: 0.85,
               file: file.newPath,
-              range: line.newLineNumber ? { start: line.newLineNumber, end: line.newLineNumber } : undefined,
+              range: line.newLineNumber
+                ? { start: line.newLineNumber, end: line.newLineNumber }
+                : undefined,
               message: 'Explicit `any` type detected',
               evidence: line.content.trim(),
             });

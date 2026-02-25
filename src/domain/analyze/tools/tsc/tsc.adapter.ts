@@ -1,7 +1,10 @@
 import * as ts from 'typescript';
 import { Finding } from '../../rules/rule.types';
 
-export function adaptTscDiagnosticsToFindings(diags: readonly ts.Diagnostic[], cwd: string): Finding[] {
+export function adaptTscDiagnosticsToFindings(
+  diags: readonly ts.Diagnostic[],
+  cwd: string
+): Finding[] {
   const out: Finding[] = [];
 
   for (const d of diags) {

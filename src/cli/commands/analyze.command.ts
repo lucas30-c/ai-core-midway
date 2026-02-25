@@ -19,6 +19,7 @@ export function registerAnalyzeCommand(program: Command): void {
     .option('--out <path>', 'Output file path (default: stdout)')
     .option('--fail-on <level>', 'Fail threshold (error|warning)', 'error')
     .option('--tsc-mode <mode>', 'TypeScript check mode (fast|full)', 'fast')
+    .option('--config <path>', 'Path to .ai-debt.json config file')
     .action(async (opts: Record<string, string | boolean>) => {
       // Source exclusivity check
       const sources = [
@@ -72,6 +73,7 @@ export function registerAnalyzeCommand(program: Command): void {
         failOn,
         tscMode,
         cwd: (opts.cwd as string) || process.cwd(),
+        config: opts.config as string | undefined,
       };
 
       const exitCode = await executeAnalyzeCommand(options);

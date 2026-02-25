@@ -31,11 +31,13 @@ export class CallStore {
       this.cache.shift();
     }
 
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO llm_calls
       (request_id, model, latency_ms, total_tokens, cost, status, error_code, ts)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `
+    ).run(
       record.requestId,
       record.model,
       record.latencyMs,
@@ -52,13 +54,17 @@ export class CallStore {
   }
 
   summary() {
-    return db.prepare(`
+    return db
+      .prepare(
+        `
       SELECT
         COUNT(*) as total_calls,
         SUM(total_tokens) as total_tokens,
         SUM(cost) as total_cost,
         AVG(latency_ms) as avg_latency
       FROM llm_calls
-    `).get();
+    `
+      )
+      .get();
   }
 }

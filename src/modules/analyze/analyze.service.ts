@@ -1,9 +1,11 @@
 import { Provide } from '@midwayjs/core';
 import { parseGitDiff } from '../../domain/analyze/diff/diff.parser';
+import { DiffFile } from '../../domain/analyze/diff/diff.types';
 import { RuleEngine } from '../../domain/analyze/rules/rule.engine';
 import { LargeDiffRule } from '../../domain/analyze/rules/rules/large-diff.rule';
 import { ConsoleLogRule } from '../../domain/analyze/rules/rules/console-log.rule';
 import { AnyTypeRule } from '../../domain/analyze/rules/rules/any-type.rule';
+import { AstBoundaryRule } from '../../domain/analyze/rules/rules/ast-boundary.rule';
 import { EslintRunner } from '../../domain/analyze/tools/eslint/eslint.runner';
 import { TscRunner } from '../../domain/analyze/tools/tsc/tsc.runner';
 import { AnalyzeContext, Finding } from '../../domain/analyze/rules/rule.types';
@@ -13,12 +15,15 @@ import {
   ReportModel,
   RiskLevel,
 } from '../../domain/analyze/report/report.model';
+import { AiDebtConfig } from '../../domain/analyze/config/config.types';
+import { DEFAULT_CONFIG } from '../../domain/analyze/config/default.config';
 
 export interface AnalyzeOptions {
   requestId?: string;
   traceId?: string;
   tscMode?: 'fast' | 'full';
   cwd?: string;
+  config?: AiDebtConfig;
 }
 
 export interface AnalyzeResult {
@@ -36,6 +41,28 @@ function riskLevel(findings: Finding[]): RiskLevel {
   return 'LOW';
 }
 
+/**
+ * Normalize changed files from diff to the format expected by rules:
+ * - Relative to cwd (no absolute paths)
+ * - POSIX separators (/) only
+ * - No a/ or b/ prefixes
+ * - No leading / or ./
+ */
+function normalizeChangedFiles(diffFiles: DiffFile[]): string[] {
+  return diffFiles
+    .map(f => f.newPath)
+    .filter(p => p !== '/dev/null' && !p.startsWith('/dev/null'))
+    .map(p => {
+      // Remove a/ or b/ prefix if present (git diff format)
+      let normalized = p.replace(/^[ab]\//, '');
+      // Remove leading / or ./
+      normalized = normalized.replace(/^\.?\//, '');
+      // Convert backslashes to forward slashes (POSIX)
+      normalized = normalized.replace(/\\/g, '/');
+      return normalized;
+    });
+}
+
 @Provide()
 export class AnalyzeService {
   async analyzeDiff(
@@ -43,6 +70,8 @@ export class AnalyzeService {
     opts?: AnalyzeOptions
   ): Promise<AnalyzeResult> {
     const tscMode = opts?.tscMode || 'fast';
+    const cwd = opts?.cwd || process.cwd();
+    const config = opts?.config || DEFAULT_CONFIG;
 
     // 1. Parse diff
     const diffFiles = parseGitDiff(diff);
@@ -59,26 +88,27 @@ export class AnalyzeService {
       }
     }
 
+    // 3. Normalize changed files for context
+    const changedFiles = normalizeChangedFiles(diffFiles);
+
     const analyzeCtx: AnalyzeContext = {
       diffFiles,
       stats: { filesChanged: diffFiles.length, insertions, deletions },
+      cwd,
+      changedFiles,
+      config,
     };
 
-    // 3. Run rule engine (hand-written rules)
+    // 4. Run rule engine (hand-written rules including AST boundary)
     const ruleEngine = new RuleEngine([
       new LargeDiffRule(),
       new ConsoleLogRule(),
       new AnyTypeRule(),
+      new AstBoundaryRule(),
     ]);
     const ruleFindings = ruleEngine.run(analyzeCtx);
 
-    // 4. Extract changed files for tool runners
-    const changedFiles = diffFiles
-      .map(f => f.newPath)
-      .filter(p => !p.startsWith('/dev/null') && p !== '/dev/null');
-
     // 5. Run tool runners (ESLint + TSC)
-    const cwd = opts?.cwd || process.cwd();
     const toolFindings = [
       ...(await new EslintRunner().run({ cwd, files: changedFiles, ...opts })),
       ...(await new TscRunner().run({

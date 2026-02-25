@@ -5,12 +5,19 @@ export function resolveExitCode(
   report: ReportModel,
   failOn: 'error' | 'warning'
 ): ExitCode {
-  const hasHigh = report.items.some(item => item.severity === 'HIGH');
-  const hasMedium = report.items.some(item => item.severity === 'MEDIUM');
+  // Filter out runtime findings - they never affect exit code
+  const actionableItems = report.items.filter(
+    item => !item.ruleId.includes(':runtime')
+  );
 
-  if (failOn === 'error' && hasHigh) return ExitCode.THRESHOLD_EXCEEDED;
-  if (failOn === 'warning' && (hasHigh || hasMedium))
-    return ExitCode.THRESHOLD_EXCEEDED;
+  if (failOn === 'error') {
+    const hasHigh = actionableItems.some(item => item.severity === 'HIGH');
+    return hasHigh ? ExitCode.THRESHOLD_EXCEEDED : ExitCode.SUCCESS;
+  }
 
-  return ExitCode.SUCCESS;
+  // failOn === 'warning'
+  const hasHighOrMedium = actionableItems.some(
+    item => item.severity === 'HIGH' || item.severity === 'MEDIUM'
+  );
+  return hasHighOrMedium ? ExitCode.THRESHOLD_EXCEEDED : ExitCode.SUCCESS;
 }

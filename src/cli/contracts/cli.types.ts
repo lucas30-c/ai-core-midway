@@ -8,6 +8,7 @@ export interface AnalyzeCommandOptions {
   failOn: 'error' | 'warning';
   tscMode: 'fast' | 'full';
   cwd: string;
+  config?: string; // path to .ai-debt.json config file
 }
 
 export enum ExitCode {

@@ -16,7 +16,11 @@ import { AnalyzeModule } from './modules/analyze/analyze.module';
 })
 export class MainConfiguration {
   async onReady(_container, app: Application) {
-    app.useMiddleware([TraceMiddleware, RequestIdMiddleware, AccessLogMiddleware]);
+    app.useMiddleware([
+      TraceMiddleware,
+      RequestIdMiddleware,
+      AccessLogMiddleware,
+    ]);
     app.useFilter([GlobalErrorFilter]);
   }
 }

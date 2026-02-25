@@ -1,166 +1,194 @@
-🧠 tech-debt
+# 🧠 tech-debt
 
-面向工程实践的 PR 影响面分析工具
-Deterministic 静态分析 + 本地知识库 (RAG) + 安全 LLM 增强
+> 面向工程实践的 PR 影响面分析工具  
+> Deterministic 静态分析 + 本地知识库 (RAG) + 安全 LLM 增强
 
-🚀 快速开始
-1️⃣ 安装
-全局安装
+## 🚀 快速开始
+
+### 1️⃣ 安装
+
+**全局安装**
+
+```bash
 npm install -g @finn_ryu/tech-debt
-或作为项目依赖
+```
+
+**或作为项目依赖**
+
+```bash
 npm install --save-dev @finn_ryu/tech-debt
-2️⃣ 最简单使用（只做确定性分析）
+```
+
+### 2️⃣ 最简单使用（只做确定性分析）
+
+```bash
 tech-debt analyze --git-range origin/main..HEAD
+```
 
 适用于：
 
-日常 PR 自查
+- 日常 PR 自查
+- CI 预检查
+- 不需要知识库和 LLM 的场景
 
-CI 预检查
+### 3️⃣ 输出 JSON（用于 CI / 自动化系统）
 
-不需要知识库和 LLM 的场景
-
-3️⃣ 输出 JSON（用于 CI / 自动化系统）
+```bash
 tech-debt analyze \
   --git-range origin/main..HEAD \
   --format json
-4️⃣ 输出 Markdown 报告（适合 PR 评论）
+```
+
+### 4️⃣ 输出 Markdown 报告（适合 PR 评论）
+
+```bash
 tech-debt analyze \
   --git-range origin/main..HEAD \
   --format markdown
-📌 项目简介
+```
+
+## 📌 项目简介
 
 tech-debt 是一个用于分析 Git 代码变更影响面 的 CLI 工具。
 
-它的目标不是“生成漂亮报告”，而是帮助你：
+它的目标不是"生成漂亮报告"，而是帮助你：
 
-判断这次改动会影响哪些层（touchedAreas）
+- 判断这次改动会影响哪些层（touchedAreas）
+- 是否违反架构边界
+- 存在哪些潜在风险点
+- 需要补充哪些回归测试
+- 是否触发技术债规则
 
-是否违反架构边界
+## 🧭 核心理念
 
-存在哪些潜在风险点
+> 先做完全 deterministic 的工程分析，  
+> 再用 LLM 进行语义增强，但绝不改变事实。
 
-需要补充哪些回归测试
+## ✨ 核心能力
 
-是否触发技术债规则
+### Phase 1 — 工程级确定性分析
 
-🧭 核心理念
+- Git diff 解析
+- AST 规则引擎
+- 分层架构校验（boundary rules）
+- 风险等级计算
+- 影响面聚合（touchedAreas / riskPoints）
+- Markdown / JSON 双输出
+- 严格 schemaVersion: "2.0.0"
 
-先做完全 deterministic 的工程分析，
-再用 LLM 进行语义增强，但绝不改变事实。
+### Phase 2 — 语义增强能力（可选）
 
-✨ 核心能力
-Phase 1 — 工程级确定性分析
+**可选启用：**
 
-Git diff 解析
+- 本地知识库检索（SQLite + FTS5）
+- 增量索引（hash 对比）
+- 可选 Embedding 相似度检索
+- LLM 安全增强（仅增强 summary 和 checklist）
 
-AST 规则引擎
+**如果 LLM 或 KB 不可用：**
 
-分层架构校验（boundary rules）
+- 工具自动优雅降级，不影响基础分析结果。
 
-风险等级计算
-
-影响面聚合（touchedAreas / riskPoints）
-
-Markdown / JSON 双输出
-
-严格 schemaVersion: "2.0.0"
-
-Phase 2 — 语义增强能力（可选）
-
-可选启用：
-
-本地知识库检索（SQLite + FTS5）
-
-增量索引（hash 对比）
-
-可选 Embedding 相似度检索
-
-LLM 安全增强（仅增强 summary 和 checklist）
-
-如果 LLM 或 KB 不可用：
-
-工具自动优雅降级，不影响基础分析结果。
-
-📚 使用本地知识库（RAG）
+## 📚 使用本地知识库（RAG）
 
 当你希望：
 
-让分析结合架构文档
-
-引入 ADR
-
-结合内部规范说明
+- 让分析结合架构文档
+- 引入 ADR
+- 结合内部规范说明
 
 使用：
 
+```bash
 tech-debt analyze \
   --git-range origin/main..HEAD \
   --kb-dir ./docs \
   --kb-dir ./adr
-支持特性
+```
 
-多目录支持
+### 支持特性
 
-默认扫描 **/*.md
-
-自动增量索引
+- 多目录支持
+- 默认扫描 `**/*.md`
+- 自动增量索引
 
 索引文件存储在：
 
+```
 .project-root/.tech-debt/
   ├── kb.sqlite
   └── meta.json
-禁用知识库
+```
+
+### 禁用知识库
+
+```bash
 tech-debt analyze --kb-off
+```
 
 适用于：
 
-CI 场景
+- CI 场景
+- 只做快速 deterministic 校验
 
-只做快速 deterministic 校验
-
-🤖 启用 LLM 增强
+## 🤖 启用 LLM 增强
 
 LLM 是可选的。
 
-方式一：使用 OpenAI 兼容接口
+### 方式一：使用 OpenAI 兼容接口
 
 设置环境变量：
 
+```bash
 export TECH_DEBT_LLM_PROVIDER=openai-compatible
 export TECH_DEBT_LLM_MODEL=gpt-4o-mini
 export TECH_DEBT_LLM_BASE_URL=https://api.openai.com
 export TECH_DEBT_LLM_API_KEY=xxx
+```
 
 然后执行：
 
+```bash
 tech-debt analyze --git-range HEAD~1..HEAD
-方式二：使用 mock（用于测试）
+```
+
+### 方式二：使用 mock（用于测试）
+
+```bash
 export TECH_DEBT_LLM_PROVIDER=mock
 export TECH_DEBT_LLM_MODEL=mock
-禁用 LLM
-tech-debt analyze --llm-off
-🧩 CLI 参数说明
-参数	说明
---git-range	Git diff 范围
---cwd	指定工作目录
---config	指定配置文件
---format	json / markdown
---kb-dir	知识库目录（可重复）
---kb-glob	知识库匹配规则
---kb-off	禁用知识库
---llm-off	禁用 LLM
---llm-provider	指定 LLM 类型
---llm-model	指定模型
---llm-base-url	指定 API 地址
---llm-api-key	指定 API Key
-⚙ 配置文件说明
+```
 
-配置文件：.ai-debt.json
+### 禁用 LLM
+
+```bash
+tech-debt analyze --llm-off
+```
+
+## 🧩 CLI 参数说明
+
+| 参数 | 说明 |
+|------|------|
+| `--git-range` | Git diff 范围 |
+| `--cwd` | 指定工作目录 |
+| `--config` | 指定配置文件 |
+| `--format` | json / markdown |
+| `--kb-dir` | 知识库目录（可重复） |
+| `--kb-glob` | 知识库匹配规则 |
+| `--kb-off` | 禁用知识库 |
+| `--llm-off` | 禁用 LLM |
+| `--llm-provider` | 指定 LLM 类型 |
+| `--llm-model` | 指定模型 |
+| `--llm-base-url` | 指定 API 地址 |
+| `--llm-api-key` | 指定 API Key |
+
+## ⚙️ 配置文件说明
+
+配置文件：`.ai-debt.json`
 
 示例：
 
+```json
 {
   "schemaVersion": "2.0.0",
   "layers": [
@@ -176,41 +204,37 @@ tech-debt analyze --llm-off
     }
   ]
 }
-🔐 安全模型
+```
 
-LLM 只能：
+## 🔐 安全模型
 
-替换 impact.summary
+**LLM 只能：**
 
-追加回归测试建议
+- 替换 impact.summary
+- 追加回归测试建议
 
-LLM 不能：
+**LLM 不能：**
 
-修改 riskPoints
+- 修改 riskPoints
+- 修改 touchedAreas
+- 修改 deterministic findings
 
-修改 touchedAreas
+**若 LLM 失败：**
 
-修改 deterministic findings
+- 报告仍然有效
 
-若 LLM 失败：
+## 🧪 测试覆盖
 
-报告仍然有效
+- 150+ 单元测试
+- FTS5 检索验证
+- Embedding BLOB roundtrip
+- JSON 严格解析
+- LLM 失败回退测试
+- 增量索引测试
 
-🧪 测试覆盖
+## 🏗 架构概览
 
-150+ 单元测试
-
-FTS5 检索验证
-
-Embedding BLOB roundtrip
-
-JSON 严格解析
-
-LLM 失败回退测试
-
-增量索引测试
-
-🏗 架构概览
+```
 CLI
  ├── Diff 解析
  ├── 确定性规则引擎
@@ -221,30 +245,24 @@ CLI
  │     └── Embedding
  ├── LLM Provider
  └── Report Renderer
-📈 适用场景
+```
 
-PR 影响面分析
+## 📈 适用场景
 
-技术债监控
+- PR 影响面分析
+- 技术债监控
+- 架构边界守护
+- CI 自动风险评估
+- 架构文档增强分析
 
-架构边界守护
+## 🗺 Roadmap
 
-CI 自动风险评估
+- [ ] GitHub Action 集成
+- [ ] Hybrid 知识库（本地 + API）
+- [ ] 更细粒度风险模型
+- [ ] CI 阻断策略
+- [ ] Web UI 可视化
 
-架构文档增强分析
-
-🗺 Roadmap
-
-GitHub Action 集成
-
-Hybrid 知识库（本地 + API）
-
-更细粒度风险模型
-
-CI 阻断策略
-
-Web UI 可视化
-
-📜 License
+## 📜 License
 
 MIT

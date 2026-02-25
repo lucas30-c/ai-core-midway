@@ -1,5 +1,5 @@
 {
-  "name": "@luyu/tech-debt",
+  "name": "@finn_ryu/tech-debt",
   "version": "0.1.0",
   "description": "AI-powered technical debt analyzer for Git diffs",
   "type": "commonjs",
